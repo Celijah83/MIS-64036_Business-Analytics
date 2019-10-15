@@ -1,0 +1,271 @@
+---
+title: "BA_HW1"
+Author: Charity Elijah
+output: html_notebook
+Date: October 13, 2019
+---
+Part A) Descriptive Statistics & Normal Distributions
+
+```{r}
+## a)What is the probability of obtaining a score greater than 700 on a GMAT test that has a mean of 494 and a standard deviation of 100? Assume GMAT scores are normally distributed 
+
+1-pnorm(700, mean=494, sd=100)
+
+
+## b) What is the probability of getting a score between 350 and 450 on the same GMAT exam?(5 marks)
+#Step 1: Lets calculate the proportion of values that are smaller than 450.
+a <- pnorm(450, mean=494, sd=100)
+
+
+#Step 2: Lets calculate the proportion of values that are smaller than 350.
+b <- pnorm(350, mean=494, sd=100)
+#The Z-score for 30 is (350-494)/100= 
+
+a-b
+
+```
+
+
+
+```{r}
+#2
+# Find z-score and multiple by sd. Next, subtract 449 from the answer and multiply by -1
+a <- qnorm(.8665)*36
+a
+b <- (39.95992-449)*-1
+b
+
+
+
+
+```
+
+
+
+```{r}
+#3 the correlation calculation step by step
+
+K = c(59,68,78,60)
+K_mean = mean(K)
+K_adj = K - K_mean
+K_sd = sd(K)
+
+
+LA = c(90,82,78,75)
+LA_mean = mean(LA)
+LA_adj = LA - LA_mean
+LA_sd = sd(LA)
+
+#Correlation
+(sum(K_adj*LA_adj)/(K_sd*LA_sd))/(4-1)
+
+```
+
+
+
+```{r}
+
+#4 Part B) Data Wrangling
+
+
+library(dplyr)
+
+Retail <- read.csv("Online_Retail.csv")
+summary(group_by(Retail, Country, ))
+Country <- Retail %>%
+group_by( Country ) %>%
+summarise( percent = 100 * n() / nrow( Retail ), Total = n() )
+Country <- filter(Country, percent>1)
+Country
+
+```
+
+
+
+```{r}
+#5)	Create a new variable ‘TransactionValue’ that is the product of the exising ‘Quantity’ and ‘UnitPrice’ variables. Add this variable to the dataframe
+
+
+Retail$TransactionValue <- Retail$Quantity*Retail$UnitPrice
+
+```
+
+
+```{r}
+#6) transaction values by countries i.e. how much money in total has been spent each country
+
+Retail %>% group_by(Country) %>% summarise(Sum_of_Transaction = sum(TransactionValue)) %>% filter(Sum_of_Transaction > 130000)
+```
+
+
+
+```{r}
+#7
+# first convert categorical variable to Date variable
+Temp=strptime(Retail$InvoiceDate,format='%m/%d/%Y %H:%M',tz='GMT')
+head(Temp)
+
+#next,separate date, day of the week and hour components dataframe with names as New_Invoice_Date, Invoice_Day_Week and New_Invoice_Hour: 
+Retail$New_Invoice_Date <- as.Date(Temp)
+
+Retail$New_Invoice_Date[20000]- Retail$New_Invoice_Date[10]
+
+#Also we can convert dates to days of the week. Let’s define a new variable for that
+Retail$Invoice_Day_Week = (weekdays(Retail$New_Invoice_Date))
+
+
+#For the Hour, take the hour (ignore the minute) and convert into a normal numerical value:
+Retail$New_Invoice_Hour = as.numeric(format(Temp, "%H"))
+
+#Finally, lets define the month as a separate numeric variable too:
+Retail$New_Invoice_Month = as.numeric(format(Temp, "%m"))
+```
+
+
+```{r}
+#7a) percentage of transactions (by numbers) by days of the week 
+
+Retail$Invoice_Day_Week = (weekdays(Retail$New_Invoice_Date))
+Retail %>% group_by(Invoice_Day_Week) %>% summarise(perc_transaction_number=n()*100/nrow(Retail))
+```
+
+
+```{r}
+#7b) Show the percentage of transactions (by transaction volume) by days of the week
+
+Retail %>% group_by(Invoice_Day_Week) %>% summarise(perc_trans_volume=sum(TransactionValue)*100/sum(Retail$TransactionValue))
+```
+
+
+```{r}
+#7c)	Show the percentage of transactions (by transaction volume) by month of the year
+
+Retail$New_Invoice_Month = as.numeric(format(Temp, "%m"))
+
+Retail %>% group_by(New_Invoice_Month) %>% summarise(perc_trans_volume=sum(TransactionValue)*100/sum(Retail$TransactionValue))
+```
+
+
+```{r}
+#7d)     the date with the highest number of transactions from Australia
+
+Retail$New_Invoice_Date <- as.Date(Temp)
+Retail%>% filter(Country=='Australia') %>% group_by(New_Invoice_Date)%>%summarise(n=n())%>%arrange(desc(n))  
+```
+
+
+```{r}
+#7e)  hour of the day to shut down so that the distribution is at minimum for the customers.The responsible IT team is available from 7:00 to 20:00 every day
+
+Retail$New_Invoice_Hour = as.numeric(format(Temp, "%H"))
+Retail%>%group_by(New_Invoice_Hour) %>% summarise(n())   
+```
+
+
+
+```{r}
+#8) Plot the histogram of transaction values from Germany. Use the hist() function to plot
+
+Ge1 <- select(Retail, Country, TransactionValue)
+Ge2 <- filter(Ge1, Country== "Germany")
+Ge2
+hist(Ge2$TransactionValue, n=20)
+```
+
+
+```{r}
+#9 Customer with highest total sum of transactions
+
+Retail%>%group_by(CustomerID)%>%summarise(n=n())%>%arrange(desc(n))
+```
+
+
+```{r}
+#10) percentage of missing values for each variable in the dataset. Hint colMeans():
+
+colMeans(is.na(Retail)*.1)
+```
+
+
+```{r}
+#11) number of transactions with missing CustomerID records by countries
+
+CustomerID_missing <- Retail %>% 
+    group_by( CustomerID, Country ) %>%
+    summarise( sum = sum(TransactionValue), Total = n())
+
+CustomerID_missing %>% filter(is.na(CustomerID))
+```
+
+
+```{r}
+#12)  the average number of days between consecutive shopping:
+
+Retail$New_Invoice_Date <- as.Date(Temp)
+aver_days <-select(Retail,CustomerID,New_Invoice_Date)
+aver_days
+aver_no_days= diff(aver_days$New_Invoice_Date, 1)
+aver_no_days=aver_no_days[aver_days>0]
+aver_no_days
+mean(aver_no_days)
+
+
+```
+
+
+
+```{r}
+#13) Consider the cancelled transactions as those where the ‘Quantity’ variable has a negative value:
+
+French <- filter(Retail, Country=="France")
+
+French_return <- French %>% 
+    group_by( Country ) %>%
+    summarise( Neg_Total = nrow(subset(French, TransactionValue<0)), Pos_Total = nrow(subset(French, TransactionValue>0)), Return_Ratio=Neg_Total/n())
+
+French_return
+```
+
+
+
+```{r}
+#14) the product that has generated the highest revenue for the retailer:
+
+
+Product <- Retail %>% 
+    group_by( Description ) %>%
+    summarise( TransactionValue = sum(TransactionValue) )
+
+Product <- filter(Product, TransactionValue==max(TransactionValue))
+
+Product
+```
+
+
+
+
+
+```{r}
+#15) number of unique customers represented in the dataset. use unique() and length() functions
+
+length(unique(Retail$CustomerID))
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
