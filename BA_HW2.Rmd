@@ -1,0 +1,165 @@
+---
+title: "BA_HW2_Celijah"
+author: "Celijah"
+date: "10/29/2019"
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##1.	Run the following code in R-studio to create two variables X and Y.
+```{r}
+set.seed(2017)
+X=runif(100)*10
+Y=X*4+3.45
+Y=rnorm(100)*0.29*Y+Y
+
+```
+
+## a)	Plot Y against X. Include a screenshot of the plot in your submission. Using the File menu you can save the graph as a picture on your computer.  Based on the plot do you think we can fit a linear model to explain Y based on X? (5 Marks)
+
+# Answer: Yes, based on the scatterplot we can fit a linear model to explain Y based on X.
+```{r}
+ # scatterplot
+plot(X,Y, main="scatterplot")
+```
+
+## b)	Construct a simple linear model of Y based on X. Write the equation that explains Y based on X. What is the accuracy of this model? (5 Marks)
+
+# Answer: Y = B0 + B1X + E
+the regression coefficient B0 represent the intercept while B1 represents the slope and E is the error term that the regression model could not explain.
+## The accuracy of the model R square is 65%. That is the extent to which the explainatory variable X predicts Y is 65%.
+```{r}
+## lm() is the function to create linear model of Y from X
+plot(X,Y,xlim=c(0, 10),xlab="X axis", ylab="Y axis", main="my plot", col="blue")
+abline(lsfit(X, Y),col = "red") 
+Model=lm(Y ~X) 
+summary(Model)
+
+```
+#c)	How the Coefficient of Determination, R^2, of the model above is related to the correlation coefficient of X and Y? (5 marks)
+
+#Answer: Coefficient of determination R^2 is equal (r)^2, that is, Correlation Coefficient squared.R^2 or coefficient of determination shows percentage variation in y that is explained by the independent variable x. R^2 is usually between 0 and 1. It is obtained by getting the square value of the Coefficient of correlation,“r” value. In other words Coefficient of Determination is the square of Coefficient of Correlation (r)^2.The Coefficient of Correlation is the degree of relationship between two variables say x and y. Its value is between -1 and 1. +1 indicates that the two variables are perfectly increasing together, while -1 indicates that the two variables are perfectly decreasing together. 
+
+```{r}
+Coefficient_Determination <- cor(X,Y)^2
+Coefficient_Determination
+r <- (cor(X,Y)^2)/2
+r
+```
+
+# d)	Investigate the appropriateness of using linear regression for this case (10 Marks). You may also find the story here relevant. 
+# More useful hints: #residual analysis, #pattern of residuals, #normality of residuals.
+
+# Answer: It is inappropriate and gross voilations of the assumptions for Linear Regression. Fitting a a Linear Regression on a non-linear model is a gross violation of the four requirements for regression namely: 
+# 1) the error terms are normaly distributed
+# 2)the error terms are independence
+# 3)the error terms have constant variances
+# 4)linearity assumption
+```{r}
+residuals_Analysis = resid(Model)
+plot(Y, residuals_Analysis, ylab="Residual Analysis", xlab="Y")
+abline(0,0)
+standarddres =rstandard(Model)
+par(mfrow = c(2,1))
+hist(residuals_Analysis, n= 100)
+qqnorm(standarddres, ylab="Standard Res", xlab="Normal Scr")
+
+qqline(standarddres)
+```
+
+# a)	James wants to buy a car.  He and his friend, Chris, have different opinions about the Horse Power (hp) of cars. James think the weight of a car (wt) can be used to estimate the Horse Power of the car while Chris thinks the fuel consumption expressed in Mile Per Gallon (mpg), is a better estimator of the (hp). Who do you think is right? Construct simple linear models using mtcars data to answer the question. (10 marks)
+
+# Answer: The linear model below shows that Chris is right becuse the R-squared values show that fuel consumption (MPG) explains 60% of the variance in horse power, while Jame's opinion does not count because the vehicles weight(wt) only explains 43% of the variation in horsepower. 
+
+# Therefore, mpg is a better predictor of the car’s horsepower
+```{r}
+# James' opinion about the HorsePower (hp) of cars
+model <- lm(hp ~ wt,  data = mtcars)
+summary(model)
+
+# Chris' opinion about the Horse Power (hp) of cars
+model <- lm(hp ~ mpg,  data = mtcars)
+summary(model)
+
+
+
+```
+
+# b)	Build a model that uses the number of cylinders (cyl) and the mile per gallon (mpg) values of a car to predict the car Horse Power (hp). 
+
+
+```{r}
+model <- lm(hp ~ cyl + mpg,  data = mtcars)
+summary(model)
+```
+
+#I.	Using this model, what is the estimated Horse Power of a car with 4 cylinders and mpg of 22? (5 mark)
+# Answer: the estimated horsepower = 89.
+```{r}
+predict(model, data.frame(cyl=4, mpg=22))
+```
+
+#II.	Construct an 85% confidence interval of your answer in the above question. Hint: use the predict function (5 mark)  
+```{r}
+model <- lm(hp ~ cyl + mpg,  data = mtcars)
+summary(model)
+```
+
+# the lower bound is 28.53849 and the upper bound is 149.3339. Fit = 88.93618
+```{r}
+predict(model, data.frame(cyl=4, mpg=22),interval = "prediction",level=.85)
+```
+
+a)	Build a model to estimate the median value of owner-occupied homes (medv)based on the following variables: crime rate (crim), proportion of residential land zoned for lots over 25,000 sq.ft (zn), the local pupil-teacher ratio (ptratio) and weather the whether the tract bounds Chas River(chas). Is this an accurate model? (Hint check R2 ) (5 marks)
+
+# Answer: The Coefficient of Determination (R^2) = 36%. This is a weak prediction on the median value of owner-occupied homes (medv) based on the given variables. The accuracy of thus model is not reliable.
+```{r}
+library('mlbench')
+data(BostonHousing)
+
+model <- lm(medv~crim+zn+ptratio+chas, data=BostonHousing)
+summary(model)
+```
+
+#b)	Use the estimated coefficient to answer these questions? 
+
+#I.	Imagine two houses that are identical in all aspects but one bounds the Chas River and the other does not. Which one is more expensive and by how much? (5 marks)
+
+#answer: Estimated coefficients show that the house by Chas River will be more expensive because the price will increase by $4584 relative to any house not by the rive.
+```{r}
+summary(model)
+```
+
+#II.	Imagine two houses that are identical in all aspects but in the neighborhood of one of them the pupil-teacher ratio is 15 and in the other one is 18. Which one is more expensive and by how much? (Golden Question: 10 extra marks if you answer)
+
+#Answer: If the coefficient of pupil to teacher ratio = -1.49367 then there will be a decrease of approximately $1,494 to every unit change in the ptratio. Therefore, if the pupil-teacher ratio is raised by 3 units (yielding pupil-teacher ratio of 15 and 18 for the two houses). The estimated values indicates that the pupil-teacher ratio of 18 will be less expensive compared to that of pupil-teacher ratio of 15 ($1,494 *3) it’ll be $4,482.
+
+```{r}
+a <- 1494 *3
+a
+```
+#c)	Which of the variables are statistically important (i.e. related to the house price)? Hint: use the p-values of the coefficients to answer.(5 mark)
+
+#Answer: All four variables are statistically important given that their p-values are less or equal to 0.005 of significance.
+```{r}
+summary(model)
+```
+
+#d)	Use the anova analysis and determine the order of importance of these four variables.(5 marks) 
+
+#Answer: Using the sum square, the order of importance will be;:
+#1. Crim =6440.8
+#2. Ptratio = 4709.5
+#3. Zn = 3554.3
+#4. Chas = 667.2
+
+```{r}
+print(anova(model))
+
+```
